@@ -40,7 +40,6 @@ const Patches = require("Patches");
   const face = FaceTracking.face(0);
 
   rectangle2.hidden = true;
-
   rectangle3.hidden = true;
 
   const planeTransform = plane.transform;
