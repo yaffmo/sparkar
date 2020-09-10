@@ -27,7 +27,7 @@ const Patches = require('Patches')
     heart,
     material5,
     rectangle6,
-    rectangle7,
+    failScreen,
     countDown,
   ] = await Promise.all([
     Scene.root.findFirst('rectangle5'),
@@ -42,14 +42,14 @@ const Patches = require('Patches')
     Textures.findFirst('animationSequence0'),
     Materials.findFirst('material5'),
     Scene.root.findFirst('rectangle6'),
-    Scene.root.findFirst('rectangle7'),
+    Scene.root.findFirst('fail'),
     Scene.root.findFirst('countDown'),
   ])
 
   // Store a reference to a detected face
   const face = FaceTracking.face(0)
 
-  rectangle7.hidden = true
+  failScreen.hidden = true
   // paper1.hidden = true;
   //   rectangle3.hidden = true
 
@@ -125,7 +125,7 @@ const Patches = require('Patches')
   const showGamOver = material5.diffuse.currentFrame.lt(1)
   showGamOver.monitor().subscribe((e) => {
     if (e.newValue === true) {
-      rectangle7.hidden = false
+      failScreen.hidden = false
       countDown.hidden = true
     }
   })
@@ -174,9 +174,9 @@ const Patches = require('Patches')
     }, 1000)
   }
 
-  TouchGestures.onTap(rectangle7).subscribe(() => {
+  TouchGestures.onTap(failScreen).subscribe(() => {
     // paper1.hidden = false
-    rectangle7.hidden = true
+    failScreen.hidden = true
     countDown.hidden = false
     material5.diffuse.currentFrame = 3
     // rectangle3.hidden = false;
