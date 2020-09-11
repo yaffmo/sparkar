@@ -20,9 +20,9 @@ const Patches = require("Patches");
     paper1,
     paper2,
     paper3,
-    rectangle1,
-    rectangle2,
-    rectangle3,
+    reborn1,
+    reborn2,
+    reborn3,
     rectangle4,
     heart,
     material5,
@@ -30,15 +30,18 @@ const Patches = require("Patches");
     failScreen,
     countDown,
     start,
+    reborn4,
+    reborn5,
+    rectangle7,
   ] = await Promise.all([
     Scene.root.findFirst("rectangle5"),
 
     Scene.root.findFirst("paper1"),
     Scene.root.findFirst("paper2"),
     Scene.root.findFirst("paper3"),
-    Scene.root.findFirst("rectangle1"),
-    Scene.root.findFirst("rectangle2"),
-    Scene.root.findFirst("rectangle3"),
+    Scene.root.findFirst("reborn1"),
+    Scene.root.findFirst("reborn2"),
+    Scene.root.findFirst("reborn3"),
     Scene.root.findFirst("rectangle4"),
     Textures.findFirst("animationSequence0"),
     Materials.findFirst("material5"),
@@ -46,12 +49,16 @@ const Patches = require("Patches");
     Scene.root.findFirst("fail"),
     Scene.root.findFirst("countDown"),
     Scene.root.findFirst("start"),
+    Scene.root.findFirst("reborn4"),
+    Scene.root.findFirst("reborn5"),
+    Scene.root.findFirst("rectangle7"),
   ]);
 
   // Store a reference to a detected face
   const face = FaceTracking.face(0);
 
   failScreen.hidden = true;
+  rectangle7.hidden = true;
   // paper1.hidden = true;
   //   rectangle3.hidden = true
 
@@ -82,27 +89,6 @@ const Patches = require("Patches");
   //   countDown.text = numberToShow
   // }, 1000)
 
-  var timeleft = 10;
-  var countInterval = Time.setInterval(timereset, 1000);
-
-  function timereset() {
-    if (timeleft <= 0) {
-      Time.clearInterval(countInterval);
-    }
-    var countNumber = 10 - timeleft;
-    timeleft -= 1;
-    var numberToShow = countNumber.toString();
-    countDown.text = numberToShow;
-  }
-
-  function setCountReset() {
-    if (timeleft > 0) {
-      Time.clearInterval(countInterval);
-    }
-    timeleft = 10;
-    countInterval = Time.setInterval(timereset, 1000);
-  }
-
   const papers = [paper1, paper2, paper3];
 
   papers.forEach(hasTouchBottom);
@@ -129,13 +115,53 @@ const Patches = require("Patches");
   }
   material5.diffuse.currentFrame = 3;
 
-  const showGamOver = material5.diffuse.currentFrame.lt(1);
-  showGamOver.monitor().subscribe((e) => {
+  const isDead = material5.diffuse.currentFrame.lt(1);
+  // Diagnostics.watch("showWinScreen", showGamOver);
+
+  const isWinScreenNotShow = rectangle7.hidden.eq(true);
+  const showFailScreen = isDead.and(isWinScreenNotShow);
+  showFailScreen.monitor().subscribe((e) => {
     if (e.newValue === true) {
+      // papers.forEach(reset);
       failScreen.hidden = false;
       countDown.hidden = true;
     }
   });
+
+  var timeleft = 10;
+  var countInterval = Time.setInterval(timereset, 1000);
+
+  function timereset() {
+    // Diagnostics.watch("showWinScreen", material5.diffuse.currentFrame.gt(1));
+    if (timeleft <= 0) {
+      Time.clearInterval(countInterval);
+      const isAlive = material5.diffuse.currentFrame.ge(1);
+      const isTimeLeft = Reactive.val(timeleft).le(0);
+      const isFailScreenNotShow = failScreen.hidden.eq(true);
+      const showWinScreen = isAlive.and(isTimeLeft).and(isFailScreenNotShow);
+      Diagnostics.watch("showWinScreen", showWinScreen);
+
+      // showWinScreen.monitor().subscribe((e) => {
+      //   if (e.newValue === true) {
+      rectangle7.hidden = false;
+      //   }
+      // });
+    }
+
+    var countNumber = 10 - timeleft;
+    timeleft -= 1;
+
+    var numberToShow = countNumber.toString();
+    countDown.text = numberToShow;
+  }
+
+  function setCountReset() {
+    if (timeleft > 0) {
+      Time.clearInterval(countInterval);
+    }
+    timeleft = 10;
+    countInterval = Time.setInterval(timereset, 1000);
+  }
   // if (material5.diffuse.currentFrame.pinLastValue() === 0) {
   //   rectangle7.hidden = false
   // }
@@ -202,11 +228,9 @@ const Patches = require("Patches");
   }
 
   TouchGestures.onTap(failScreen).subscribe(() => {
-    // paper1.hidden = false
     failScreen.hidden = true;
     countDown.hidden = false;
     material5.diffuse.currentFrame = 3;
-    // rectangle3.hidden = false;
     setCountReset();
 
     papers.forEach(reset);
@@ -225,7 +249,6 @@ const Patches = require("Patches");
       papers.forEach(setImageSway);
     }, 1000);
   });
-
   // TouchGestures.onTap(rectangle2).subscribe(() => {
   //     reset();
   //     Time.setTimeout(() => {
@@ -306,9 +329,9 @@ const Patches = require("Patches");
   }
 
   function reset(item) {
-    const randomNum = Math.floor(Math.random() * 3);
+    const randomNum = Math.floor(Math.random() * 5);
     // Diagnostics.log(item);
-    const rebornPosition = [rectangle3, rectangle2, rectangle1];
+    const rebornPosition = [reborn3, reborn2, reborn1, reborn4, reborn5];
     // const ScreenY = Patches.getScalarValue('ScreenY').pinLastValue();
     const planeInitialYPosition = rebornPosition[randomNum].transform;
     // const planeEndYPosition = rectangle4.transform
