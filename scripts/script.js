@@ -16,7 +16,7 @@ const Patches = require("Patches");
 (async function () {
   // Locate the plane in the Scene
   const [
-    plane,
+    mouth,
     paper1,
     paper2,
     paper3,
@@ -34,7 +34,7 @@ const Patches = require("Patches");
     reborn5,
     rectangle7,
   ] = await Promise.all([
-    Scene.root.findFirst("rectangle5"),
+    Scene.root.findFirst("mouth"),
 
     Scene.root.findFirst("paper1"),
     Scene.root.findFirst("paper2"),
@@ -62,18 +62,25 @@ const Patches = require("Patches");
   // paper1.hidden = true;
   // rectangle3.hidden = true
 
-  const planeTransform = plane.transform;
-  const mouthCenterY = FaceTracking.face(0).cameraTransform.rotationY;
-  const mouthCenterX = FaceTracking.face(0).cameraTransform.rotationX;
+  const ScreenX = Patches.getScalarValue("ScreenX").pinLastValue();
+  const ScreenY = Patches.getScalarValue("ScreenY").pinLastValue();
+  // const planeTransform = plane.transform;
+  const mouthRotationY = FaceTracking.face(0).cameraTransform.rotationY;
+  const mouthRotationX = FaceTracking.face(0).cameraTransform.rotationX;
 
-  const mouthmultiplY = Reactive.mul(mouthCenterY, 300);
-  const mouthmultiplX = Reactive.mul(mouthCenterX, -600).add(-200);
+  // const mouthmultiplY = Reactive.mul(mouthCenterY, 300);
+  // const mouthmultiplX = Reactive.mul(mouthCenterX, -600).add(-200);
+  // const mouthmultiplY = mouthRotationY;
+  const mouthX = Reactive.mul(mouthRotationY, ScreenX * 0.8);
+  const mouthY = Reactive.mul(mouthRotationX, -ScreenY * 1.2).add(
+    -ScreenY * 0.25
+  );
+  Diagnostics.watch("mouthX", mouthX);
+  Diagnostics.watch("mouthY", mouthY);
+  // const mouthmultiplX = mouthRotationX;
 
-  planeTransform.x = mouthmultiplY;
-  planeTransform.y = mouthmultiplX;
-
-  // const ScreenX = Patches.getScalarValue('ScreenX').pinLastValue();
-  // const ScreenY = Patches.getScalarValue('ScreenY').pinLastValue();
+  mouth.transform.x = mouthX;
+  mouth.transform.y = mouthY;
 
   const isKissing = FaceGestures.isKissing(face).eq(true);
   //   Diagnostics.watch('kiss', isKissing)
@@ -186,7 +193,7 @@ const Patches = require("Patches");
   papers.forEach(checkTouchAndKiss);
 
   function checkTouchAndKiss(item, index) {
-    const distance = Reactive.distance(item.transform.y, plane.transform.y);
+    const distance = Reactive.distance(item.transform.y, mouth.transform.y);
     // Diagnostics.log(distance.pinLastValue())
     const isTouching = distance.le(5);
     const isKissingandtouching = Reactive.and(isTouching, isKissing);
@@ -363,7 +370,7 @@ const Patches = require("Patches");
     //   if (e.newValue === true) {
     rectangle7.hidden = showWinScreen.not();
     // failScreen.hidden = showFailScreen.not();
-    Diagnostics.watch("showFailScreen", showWinScreen);
+    // Diagnostics.watch("showFailScreen", showWinScreen);
     if (showWinScreen.pinLastValue() === true) {
       stopTimer(countInterval);
     }
