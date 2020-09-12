@@ -117,29 +117,26 @@ const Patches = require("Patches");
 
   // setFailSreen(material5, rectangle7, failScreen);
 
-  var timeleft = 10;
+  var timeleft = Reactive.val(0);
   var countInterval = Time.setInterval(timereset, 1000);
-
+  Time.clearInterval(countInterval);
   function timereset() {
     // Diagnostics.watch("showWinScreen", material5.diffuse.currentFrame.gt(1));
-    if (timeleft <= 0) {
-      Time.clearInterval(countInterval);
-    }
+    // if (timeleft <= 0) {
+    //   Time.clearInterval(countInterval);
+    // }
     setWinScreen(material5, timeleft, failScreen, rectangle7);
     setFailSreen(material5, timeleft, rectangle7, failScreen);
 
-    var countNumber = 10 - timeleft;
-    timeleft -= 1;
-
-    var numberToShow = countNumber.toString();
-    countDown.text = numberToShow;
+    timeleft = timeleft.add(1);
+    // Diagnostics.watch("timeleft", timeleft);
+    var numberToShow = timeleft.toString();
+    countDown.text = numberToShow.concat("s");
   }
 
   function setCountReset() {
-    if (timeleft > 0) {
-      Time.clearInterval(countInterval);
-    }
-    timeleft = 10;
+    Time.clearInterval(countInterval);
+    timeleft = timeleft.mul(0);
     countInterval = Time.setInterval(timereset, 1000);
   }
   // if (material5.diffuse.currentFrame.pinLastValue() === 0) {
@@ -213,6 +210,23 @@ const Patches = require("Patches");
     countDown.hidden = false;
     material5.diffuse.currentFrame = 3;
     setCountReset();
+    rectangle7.hidden = true;
+
+    papers.forEach(reset);
+    Time.setTimeout(() => {
+      papers.forEach(setImageFallEach);
+      papers.forEach(setImageSway);
+    }, 1000);
+
+    // rectangle2.hidden = paper1.transform.y.gt(-400)
+  });
+
+  TouchGestures.onTap(rectangle7).subscribe(() => {
+    rectangle7.hidden = true;
+    countDown.hidden = false;
+    material5.diffuse.currentFrame = 3;
+    setCountReset();
+    // rectangle7.hidden = true;
 
     papers.forEach(reset);
     Time.setTimeout(() => {
@@ -225,6 +239,7 @@ const Patches = require("Patches");
 
   TouchGestures.onTap(start).subscribe(() => {
     start.hidden = true;
+    countInterval = Time.setInterval(timereset, 1000);
     Time.setTimeout(() => {
       papers.forEach(setImageFallEach);
       papers.forEach(setImageSway);
@@ -331,35 +346,49 @@ const Patches = require("Patches");
     // timeDriver.start();
   }
   function setWinScreen(material5, timeleft, failScreen, rectangle7) {
-    const isAlive = material5.diffuse.currentFrame.ge(1);
-    const isTimeLeft = Reactive.val(timeleft).le(0);
-    Diagnostics.watch("isTimeLeft", timeleft);
-    const isFailScreenNotShow = failScreen.hidden.eq(true);
-    const isStartScreenNotShow = start.hidden.eq(true);
-    const showWinScreen = isAlive
-      .and(isTimeLeft)
-      .and(isFailScreenNotShow)
-      .and(isStartScreenNotShow)
-      .not();
-    // Diagnostics.watch("isTimeLeft", isTimeLeft);
-    // Diagnostics.watch("showWinScreen", showWinScreen);
+    // const isAlive = material5.diffuse.currentFrame.gt(0);
+    const isDead = material5.diffuse.currentFrame.eq(0);
+    const isTimeGreaterThan10 = timeleft.gt(10);
+    // const isFailScreenNotShow = failScreen.hidden;
+    const isStartScreenNotShow = start.hidden;
+    // Diagnostics.watch("isStartScreenNotShow", isStartScreenNotShow);
+    const showWinScreen = isDead
+      .and(isTimeGreaterThan10)
+      // .and(isFailScreenNotShow)
+      .and(isStartScreenNotShow);
 
-    rectangle7.hidden = showWinScreen;
+    // Diagnostics.watch("isTimeLeft", isTimeLeft);
+    // Diagnostics.watch("isTimeLeft", isTimeGreaterThan10);
+    // showWinScreen.monitor().subscribe((e) => {
+    //   if (e.newValue === true) {
+    rectangle7.hidden = showWinScreen.not();
+    // failScreen.hidden = showFailScreen.not();
+    Diagnostics.watch("showFailScreen", showWinScreen);
+    if (showWinScreen.pinLastValue() === true) {
+      stopTimer(countInterval);
+    }
+    //   }
+    // });
   }
 
   function setFailSreen(material5, timeleft, rectangle7, failScreen) {
     const isDead = material5.diffuse.currentFrame.eq(0);
-    // Diagnostics.watch("showWinScreen", showGamOver);
-    // const isTimeLeft = Reactive.val(timeleft).le(0);
-    // Diagnostics.watch("isTimeLeft", isTimeLeft);
-    const isWinScreenNotShow = rectangle7.hidden.eq(true);
-    const showFailScreen = isDead.and(isWinScreenNotShow);
+    // Diagnostics.watch("isDead", isDead);
+    const isTimeLessThan10 = timeleft.lt(10);
+    // const isWinScreenNotShow = rectangle7.hidden;
+    // Diagnostics.watch("isWinScreenNotShow", isWinScreenNotShow);
+    const showFailScreen = isDead.and(isTimeLessThan10);
 
-    showFailScreen.monitor().subscribe((e) => {
-      if (e.newValue === true) {
-        failScreen.hidden = false;
-        countDown.hidden = true;
-      }
-    });
+    // showFailScreen.monitor().subscribe((e) => {
+    //   if (e.newValue === true) {
+    failScreen.hidden = showFailScreen.not();
+    Diagnostics.watch("showFailScreen", showFailScreen);
+    if (showFailScreen.pinLastValue() === true) {
+      stopTimer(countInterval);
+    }
+  }
+
+  function stopTimer(countInterval) {
+    Time.clearInterval(countInterval);
   }
 })();
