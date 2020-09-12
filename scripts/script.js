@@ -60,7 +60,7 @@ const Patches = require("Patches");
   failScreen.hidden = true;
   rectangle7.hidden = true;
   // paper1.hidden = true;
-  //   rectangle3.hidden = true
+  // rectangle3.hidden = true
 
   const planeTransform = plane.transform;
   const mouthCenterY = FaceTracking.face(0).cameraTransform.rotationY;
@@ -104,7 +104,7 @@ const Patches = require("Patches");
     r6distance.monitor().subscribe((e) => {
       if (e.newValue === true) {
         reset(item);
-        Diagnostics.log(e.newValue);
+        // Diagnostics.log(e.newValue);
 
         Time.setTimeout(() => {
           setImageFallEach(item);
@@ -115,18 +115,7 @@ const Patches = require("Patches");
   }
   material5.diffuse.currentFrame = 3;
 
-  const isDead = material5.diffuse.currentFrame.lt(1);
-  // Diagnostics.watch("showWinScreen", showGamOver);
-
-  const isWinScreenNotShow = rectangle7.hidden.eq(true);
-  const showFailScreen = isDead.and(isWinScreenNotShow);
-  showFailScreen.monitor().subscribe((e) => {
-    if (e.newValue === true) {
-      // papers.forEach(reset);
-      failScreen.hidden = false;
-      countDown.hidden = true;
-    }
-  });
+  // setFailSreen(material5, rectangle7, failScreen);
 
   var timeleft = 10;
   var countInterval = Time.setInterval(timereset, 1000);
@@ -135,18 +124,9 @@ const Patches = require("Patches");
     // Diagnostics.watch("showWinScreen", material5.diffuse.currentFrame.gt(1));
     if (timeleft <= 0) {
       Time.clearInterval(countInterval);
-      const isAlive = material5.diffuse.currentFrame.ge(1);
-      const isTimeLeft = Reactive.val(timeleft).le(0);
-      const isFailScreenNotShow = failScreen.hidden.eq(true);
-      const showWinScreen = isAlive.and(isTimeLeft).and(isFailScreenNotShow);
-      Diagnostics.watch("showWinScreen", showWinScreen);
-
-      // showWinScreen.monitor().subscribe((e) => {
-      //   if (e.newValue === true) {
-      rectangle7.hidden = false;
-      //   }
-      // });
     }
+    setWinScreen(material5, timeleft, failScreen, rectangle7);
+    setFailSreen(material5, timeleft, rectangle7, failScreen);
 
     var countNumber = 10 - timeleft;
     timeleft -= 1;
@@ -198,7 +178,8 @@ const Patches = require("Patches");
         // Diagnostics.log(e.newValue);
         var num = material5.diffuse.currentFrame.pinLastValue();
         num--;
-        Diagnostics.log(num);
+        num = num < 0 ? 0 : num;
+        // Diagnostics.log(num);
         material5.diffuse.currentFrame = num;
         Diagnostics.log(material5.diffuse.currentFrame.pinLastValue());
       }
@@ -348,5 +329,37 @@ const Patches = require("Patches");
     item.transform.x = planeInitialYPosition.x;
     item.transform.y = planeInitialYPosition.y;
     // timeDriver.start();
+  }
+  function setWinScreen(material5, timeleft, failScreen, rectangle7) {
+    const isAlive = material5.diffuse.currentFrame.ge(1);
+    const isTimeLeft = Reactive.val(timeleft).le(0);
+    Diagnostics.watch("isTimeLeft", timeleft);
+    const isFailScreenNotShow = failScreen.hidden.eq(true);
+    const isStartScreenNotShow = start.hidden.eq(true);
+    const showWinScreen = isAlive
+      .and(isTimeLeft)
+      .and(isFailScreenNotShow)
+      .and(isStartScreenNotShow)
+      .not();
+    // Diagnostics.watch("isTimeLeft", isTimeLeft);
+    // Diagnostics.watch("showWinScreen", showWinScreen);
+
+    rectangle7.hidden = showWinScreen;
+  }
+
+  function setFailSreen(material5, timeleft, rectangle7, failScreen) {
+    const isDead = material5.diffuse.currentFrame.eq(0);
+    // Diagnostics.watch("showWinScreen", showGamOver);
+    // const isTimeLeft = Reactive.val(timeleft).le(0);
+    // Diagnostics.watch("isTimeLeft", isTimeLeft);
+    const isWinScreenNotShow = rectangle7.hidden.eq(true);
+    const showFailScreen = isDead.and(isWinScreenNotShow);
+
+    showFailScreen.monitor().subscribe((e) => {
+      if (e.newValue === true) {
+        failScreen.hidden = false;
+        countDown.hidden = true;
+      }
+    });
   }
 })();
